@@ -2,10 +2,11 @@ IMPORTANT
 - input secret
 
 NICE
-- check ip is external
 - nice UI
 - figure out how to easy install it on linux
 - set config settings in web
 - reset secret
 - debug long time issue in pinger
 - script to update etc/hosts or a better way
+- add name leasing (every new computer gets a name and a code - avoids name conflicts)
+- remove old entries (with leasing you could require periodic re-leasing)

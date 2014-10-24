@@ -2,14 +2,15 @@ import time
 import json
 import sys
 
-from os.path import isfile, expanduser
+from os.path import isfile, expanduser, join
 from os import remove
 
 from network import get_ip
-from utils import get_data_dir
+from utils import data_dir
 
-if isfile(join(get_data_dir(), ".pdrc_developer")):
-    CONFIG_PATH = ".pdrc_developer"
+if isfile(join(data_dir(), ".pdrc_developer")):
+    print "Using dev_config"
+    CONFIG_PATH = join(data_dir(), ".pdrc_developer")
 else:
     CONFIG_PATH = expanduser("~/.pdrc")
 
@@ -26,11 +27,17 @@ class InteractiveConfigValidation(object):
 
     def test_server(self, server, port):
         response = get_ip(server, port, 'wrong_secret', 'test_domain')
-        return response != 'connection_error'
+        res = response != 'connection_error'
+        if not res:
+            print "Could not reach server."
+        return res
 
     def test_secret(self, server, port, secret):
         response = get_ip(server, port, secret, 'test_domain')
-        return response != 'connection_error' and response != 'wrong_secret'
+        res = response != 'connection_error' and response != 'wrong_secret'
+        if not res:
+            print "Could not verify secret."
+        return res
 
     def update_server(self, config):
         server_updated = False
@@ -54,8 +61,6 @@ class InteractiveConfigValidation(object):
                 config['server'] = server
                 config['port'] = port
                 self.write_back(config)
-            else:
-                print 'Connection unsuccessful.'
 
     def write_back(self, config):
         with open(CONFIG_PATH, "w+") as f:
@@ -71,8 +76,6 @@ class InteractiveConfigValidation(object):
                 secret_updated = True
                 config['secret'] = secret
                 self.write_back(config)
-            else:
-                print 'Secret could not be verified.'
 
     def run(self, require_domain=False):
         config = None

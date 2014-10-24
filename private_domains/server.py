@@ -4,13 +4,17 @@ import re
 import sqlite3
 import time
 import sys
+import time
 
 from contextlib import closing
 from flask import Flask, request, g
-from os.path import isfile
+from os.path import isfile, join
+
+from utils import timeit, data_dir
 app = Flask(__name__)
 
-DATABASE = 'pd.db'
+DATABASE = join(data_dir(), 'pd.db')
+SQL_INIT_FILE = join(data_dir(), 'schema.sql')
 
 CONFIG_DEFAULTS = {
     'ping_frequency' : 60,
@@ -24,7 +28,7 @@ class DatabaseHandler(object):
 
     def init_state(self):
         with closing(sqlite3.connect(DATABASE)) as db:
-            with app.open_resource('schema.sql', mode='r') as f:
+            with app.open_resource(SQL_INIT_FILE, mode='r') as f:
                 db.cursor().executescript(f.read())
             db.commit()
 
@@ -88,7 +92,10 @@ def random_secret():
         s.append(chr(random.randint(97,122)))
     return ''.join(s)
 
+from utils import timeit
+
 @app.route("/save_ip", methods=['GET', 'POST'])
+@timeit(app.logger)
 def save_ip():
     if request.method == 'GET':
         return 'do this from a script...'
@@ -106,7 +113,9 @@ def save_ip():
 
 
     if (type(domain) != unicode or type(ip) != unicode or
-        not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip)):
+        not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ip) or
+        any([ not word.isalpha() for word in domain.split('_')])
+        or len(domain) not in range(5,31)):
         return "WRONG DATA", 400
 
     db.update_domain(domain, ip)
@@ -160,28 +169,4 @@ def index():
             "%s has ip %s and methinks it's %s" % (domain, ip, 'up' if alive else 'down'))
     return "SECRET OK: %s<br>%s" % (cookies_secret,'\n'.join(domain_string))
 
-def usage():
-    print 'Usage:\n%s port [debug]' % (sys.argv[0],)
-    sys.exit(1)
 
-if __name__ == "__main__":
-    if len(sys.argv) not in [2,3]:
-        usage()
-
-    port=None
-    try:
-        port = int(sys.argv[1])
-    except Exception:
-        usage()
-
-    debug = False
-    if len(sys.argv) == 3:
-        if sys.argv[2] not in ['debug']:
-            usage()
-        else:
-            debug = True
-
-    if debug:
-        app.run(port=port, debug=True)
-    else:
-        app.run(host='0.0.0.0', port=port, debug=False)
