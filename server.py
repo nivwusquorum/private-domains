@@ -81,12 +81,6 @@ def close_connection(exception):
 
 db = DatabaseHandler()
 
-
-
-
-
-
-
 def random_secret():
     s = []
     for _ in range(20):
@@ -128,17 +122,14 @@ def get_ip():
 
     domain = request.form.get('domain')
     password = request.form.get('password')
-    print type(password)
 
     if type(password) != unicode or hashlib.sha224(password).hexdigest() != secret_hash:
-        return "WRONG SECRET"
-
+        return "WRONG SECRET", 403
 
     if type(domain) != unicode:
         return "WRONG DATA", 400
 
     ip = db.get_ip(domain)
-    print ip
     return ip if ip else ("NOT FOUND", 404)
 
 def create_secret():

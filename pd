@@ -1,31 +1,26 @@
 #!/bin/python
-
-import socket
 import sys
-import requests
-import time
 
-SERVER = "http://localhost"
-PORT = 5555
-SECRET = 'gzkfqqurkvnjtagjfmxi'
+from config import InteractiveConfigValidation
+from network import get_ip
+
 
 def usage():
     print 'Usage:\b%s <private_domain>\nreturns ip for private domain' % (sys.argv[0],)
     sys.exit(1)
 
-if len(sys.argv) < 2:
+if len(sys.argv) != 2:
     usage()
 
-payload = {
-    'domain': sys.argv[1],
-    'password': SECRET,
-}
+icv = InteractiveConfigValidation()
+icv.run()
+config = icv.get()
 
-r = requests.post('%s:%d/get_ip' % (SERVER,PORT), data=payload)
-if r.status_code == 404:
+resp = get_ip(config['server'], config['port'], config['secret'], sys.argv[1])
+
+if resp == 'not_found':
     print 'not found'
-    sys.exit(2)
-elif r.status_code != 200:
+elif resp == 'connection_error':
     print 'connection error'
 else:
-    print r.text
+    print resp
