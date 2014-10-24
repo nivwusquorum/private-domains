@@ -3,6 +3,7 @@ import random
 import re
 import sqlite3
 import time
+import sys
 
 from contextlib import closing
 from flask import Flask, request, g
@@ -159,5 +160,28 @@ def index():
             "%s has ip %s and methinks it's %s" % (domain, ip, 'up' if alive else 'down'))
     return "SECRET OK: %s<br>%s" % (cookies_secret,'\n'.join(domain_string))
 
+def usage():
+    print 'Usage:\n%s port [debug]' % (sys.argv[0],)
+    sys.exit(1)
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5555, debug=DEBUG)
+    if len(sys.argv) not in [2,3]:
+        usage()
+
+    port=None
+    try:
+        port = int(sys.argv[1])
+    except Exception:
+        usage()
+
+    debug = False
+    if len(sys.argv) == 3:
+        if sys.argv[2] not in ['debug']:
+            usage()
+        else:
+            debug = True
+
+    if debug:
+        app.run(port=port, debug=True)
+    else:
+        app.run(host='0.0.0.0', port=port, debug=False)
