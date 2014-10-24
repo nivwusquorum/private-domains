@@ -1,0 +1,24 @@
+{% extends "index.html" %}
+
+{% block links %}
+<li class="active"><a href="/domains">Domains</a></li>
+<li><a href="/configuration">Configuration</a></li>
+{% endblock %}
+
+{% block content %}
+
+<table class="table table-bordered table-hover">
+<tr>
+<th>Domain</th>
+<th>IP</th>
+<th>Status</th>
+</tr>
+{% for domain in domains %}
+    <tr class="{% if domain[2] %}success{% else %}danger{% endif %}">
+        <td>{{domain[0]}}</td>
+        <td>{{domain[1]}}</td>
+        <td>{% if domain[2] %}alive{% else %} down{% endif %}</td>
+    </tr>
+{% endfor %}
+</table>
+{% endblock %}

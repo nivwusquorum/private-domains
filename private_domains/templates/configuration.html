@@ -1,0 +1,10 @@
+{% extends "index.html" %}
+
+{% block links %}
+<li><a href="/domains">Domains</a></li>
+<li class="active"><a href="/configuration">Configuration</a></li>
+{% endblock %}
+
+{% block content %}
+Secret: {{secret}}
+{% endblock %}

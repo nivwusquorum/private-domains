@@ -7,10 +7,11 @@ import sys
 import time
 
 from contextlib import closing
-from flask import Flask, request, g
+from flask import Flask, request, g, render_template
 from os.path import isfile, join
 
 from utils import timeit, data_dir
+
 app = Flask(__name__)
 
 DATABASE = join(data_dir(), 'pd.db')
@@ -154,6 +155,7 @@ def create_secret():
            """ % (s,s)
 
 @app.route("/", methods=['GET'])
+@app.route("/domains", methods=['GET'])
 def index():
     secret_hash = db.get_config('secret_hash')
     if secret_hash is None:
@@ -161,12 +163,29 @@ def index():
     cookies_secret = request.cookies.get('secret')
     if type(cookies_secret) != unicode or hashlib.sha224(cookies_secret).hexdigest() != secret_hash:
         return "set your cookies straight"
-    domain_string = []
     ping_frequency = db.get_config('ping_frequency')
-    for domain, ip, last_ping_ms in db.get_domains():
-        alive = int(time.time()*1000) - last_ping_ms <= 3*ping_frequency*100
-        domain_string.append(
-            "%s has ip %s and methinks it's %s" % (domain, ip, 'up' if alive else 'down'))
-    return "SECRET OK: %s<br>%s" % (cookies_secret,'\n'.join(domain_string))
 
+    processed_domains = []
+    for domain, ip, last_ping_ms in db.get_domains():
+        time_since_ping = int(time.time()*1000) - last_ping_ms
+        alive = time_since_ping <= 3*ping_frequency*1000
+
+        processed_domains.append((domain, ip, alive, time_since_ping))
+
+    return render_template("domains.html", domains=processed_domains)
+
+
+@app.route("/configuration", methods=['GET', 'POST'])
+def configuration():
+    secret_hash = db.get_config('secret_hash')
+    if secret_hash is None:
+        return create_secret()
+    cookies_secret = request.cookies.get('secret')
+    if type(cookies_secret) != unicode or hashlib.sha224(cookies_secret).hexdigest() != secret_hash:
+        return "set your cookies straight"
+    ping_frequency = db.get_config('ping_frequency')
+
+
+    return render_template("configuration.html", secret=cookies_secret)
+    #return "SECRET OK: %s<br>%s" % (cookies_secret,'\n'.join(domain_string))
 

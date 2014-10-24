@@ -6,8 +6,9 @@ setup(name='private-domains',
         author='Szymon Sidor',
         author_email='szymon.sidor@gmail.com',
         url='https://github.com/nivwusquorum/private-domains'
-        py_modules=['private_domains'],
-        data_files=[('data', ['data/schema.sql', 'bm/b2.gif'])],
+        packages=['private_domains'],
+        package_data={'private_domains': ['templates/*.html']},
+
         scripts=['scripts/pd'],
         ]
 )
