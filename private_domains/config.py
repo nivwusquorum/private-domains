@@ -5,8 +5,8 @@ import sys
 from os.path import isfile, expanduser, join
 from os import remove
 
-from network import get_ip
-from utils import data_dir
+from network import get_ip, connected_to_internet
+from utils import data_dir, exponential_backoff
 
 if isfile(join(data_dir(), ".pdrc_developer")):
     print "Using dev_config"
@@ -78,6 +78,9 @@ class InteractiveConfigValidation(object):
                 self.write_back(config)
 
     def run(self, require_domain=False):
+        def body():
+             print "No Internet connection. Backing off."
+        exponential_backoff(lambda: connected_to_internet(), body)
         config = None
         if isfile(CONFIG_PATH):
             with open(CONFIG_PATH) as config:

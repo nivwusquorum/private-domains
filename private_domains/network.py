@@ -1,5 +1,6 @@
 import socket
 import requests
+import urllib2
 
 
 def interpret_reponse(response):
@@ -46,3 +47,12 @@ def send_ip(server, port, secret, my_domain):
         return int(r.text.split(' ')[-1])
     except Exception as e:
         return None
+
+def connected_to_internet():
+    try:
+        _ = urllib2.urlopen("http://74.125.228.100", timeout=3) # one of google's IPs.
+        print 'true'
+        return True
+    except urllib2.URLError:
+        print 'false'
+        return False

@@ -1,4 +1,5 @@
 import time
+import urllib2
 
 from os.path import abspath, dirname, join
 
@@ -20,3 +21,10 @@ def timeit(logger):
             return result
         return timed
     return wrap
+
+def exponential_backoff(until_condition, body, intital_backoff=1, max_backoff=1000):
+    backoff = intital_backoff
+    while not until_condition():
+        body()
+        time.sleep(backoff)
+        backoff = min(backoff*2, max_backoff)
