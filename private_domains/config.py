@@ -5,7 +5,7 @@ import sys
 from os.path import isfile, expanduser, join
 from os import remove, getlogin
 
-from network import get_ip, connected_to_internet
+from network import Network
 from utils import data_dir, exponential_backoff
 
 
@@ -32,15 +32,19 @@ class InteractiveConfigValidation(object):
                 return path
         return None
 
-    def test_server(self, server, port):
-        response = get_ip(server, port, 'wrong_secret', 'test_domain')
+    def test_server(self, config):
+        network = Network(config['server'], config['port'], 'wrong_secret', config['verify_ssl'])
+
+        response = network.get_ip('test_domain')
         res = response != 'connection_error'
         if not res:
             print "Could not reach server."
         return res
 
-    def test_secret(self, server, port, secret):
-        response = get_ip(server, port, secret, 'test_domain')
+    def test_secret(self, config):
+        network = Network(config['server'], config['port'], config['secret'], config['verify_ssl'])
+
+        response = network.get_ip('test_domain')
         res = response != 'connection_error' and response != 'wrong_secret'
         if not res:
             print "Could not verify secret."
@@ -50,27 +54,36 @@ class InteractiveConfigValidation(object):
         server_updated = False
 
         while not server_updated:
-            print 'Please type the private domains server IP or DOMAIN (without port): ',
+            print 'Please type the private domains server IP or DOMAIN (without port but including protocol): ',
             server = raw_input()
+
+            if 'https' in server:
+                default_port = 443
+            else:
+                default_port = 80
             port = None
             while port is None:
-                print 'Please type the private domains server port: ',
+                print 'Please type the private domains server port[%d]: ' % (default_port,),
                 port = raw_input()
+                if port == '':
+                    port = default_port
                 try:
                     port = int(port)
                 except:
                     print 'Port has to be an integer'
                     port = None
-
-            if self.test_server(server, port):
+            updated_config = dict(config.items() + {'server':server, 'port': port}.items())
+            if self.test_server(updated_config):
                 print 'Successfully connected to server :-)'
                 server_updated = True
-                config['server'] = server
-                config['port'] = port
+                config.update(updated_config)
                 self.write_back(config)
 
     def write_back(self, config):
-        with open(CONFIG_PATH, "w+") as f:
+        path = self.get_config_path()
+        if path is None:  # file does not exist yet
+            path = expanduser("~/.pdrc")
+        with open(path, "w+") as f:
             f.write(json.dumps(config))
 
     def update_secret(self, config):
@@ -78,16 +91,18 @@ class InteractiveConfigValidation(object):
         while not secret_updated:
             print 'Please type secret (copy it over from your server): ',
             secret = raw_input()
-            if self.test_secret(config['server'], config['port'], secret):
+            updated_config = dict(config.items() + {'secret': secret}.items())
+
+            if self.test_secret(updated_config):
                 print 'Secret verified :-)'
                 secret_updated = True
-                config['secret'] = secret
+                config.update(updated_config)
                 self.write_back(config)
 
     def run(self, require_domain=False):
         def body():
              print "No Internet connection. Backing off."
-        exponential_backoff(lambda: connected_to_internet(), body)
+        exponential_backoff(lambda: Network.connected_to_internet(), body)
 
         config = None
         config_path = self.get_config_path()
@@ -107,10 +122,15 @@ class InteractiveConfigValidation(object):
         else:
             config = {}
 
-        if 'server' not in config or 'port' not in config or not self.test_server(config['server'], config['port']):
+        if not 'verify_ssl' in config:
+            _, verify_ssl = self.ask_action("Do you wish to perform ssl verification?", lambda: ())
+            config['verify_ssl'] = verify_ssl
+            self.write_back(config)
+
+        if 'server' not in config or 'port' not in config or not self.test_server(config):
             self.update_server(config)
 
-        if 'secret' not in config or not self.test_secret(config['server'], config['port'], config['secret']):
+        if 'secret' not in config or not self.test_secret(config):
             self.update_secret(config)
 
         if 'domain' not in config and require_domain:

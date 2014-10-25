@@ -5,24 +5,27 @@ import traceback
 
 from os import getlogin
 from os.path import join, expanduser, isfile
+from requests.packages import urllib3
 
 from config import InteractiveConfigValidation
 from daemon import Daemon
-from network import get_ip, get_ips, send_ip, SEND_MIN_WAIT
+from network import Network
 from server import app
 from utils import data_dir, which, ensure_sudo
 
+# disable annoying unverified https warning
+urllib3.disable_warnings()
+
+
 class PingingDaemon(Daemon):
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, network, my_domain):
+        self.network = network
+        self.my_domain = my_domain
         super(PingingDaemon, self).__init__(expanduser("~/.pd_daemon_pid"))
 
     def run(self):
         while True:
-            next_update = send_ip(self.config['server'],
-                                  self.config['port'],
-                                  self.config['secret'],
-                                  self.config['domain'])
+            next_update = self.network.send_ip(self.my_domain)
             if next_update is None:
                 next_update = SEND_MIN_WAIT
             time.sleep(next_update)
@@ -71,7 +74,8 @@ class Get(object):
         icv.run()
         config = icv.get()
 
-        resp = get_ip(config['server'], config['port'], config['secret'], domain)
+        network = Network(config['server'], config['port'], config['secret'], config['verify_ssl'])
+        resp = network.get_ip(domain)
 
         if resp == 'not_found':
             print 'not found'
@@ -97,7 +101,8 @@ class GetAll(object):
         icv.run()
         config = icv.get()
 
-        resp = get_ips(config['server'], config['port'], config['secret'])
+        network = Network(config['server'], config['port'], config['secret'], config['verify_ssl'])
+        resp = network.get_ips()
 
         if resp == 'connection_error':
             print 'connection error'
@@ -124,7 +129,8 @@ class EtcHosts(object):
         icv.run()
         config = icv.get()
 
-        resp = get_ips(config['server'], config['port'], config['secret'])
+        network = Network(config['server'], config['port'], config['secret'], config['verify_ssl'])
+        resp = network.get_ips()
 
         if resp == 'connection_error':
             print 'connection error'
@@ -190,7 +196,8 @@ class Pinging(object):
         icv.run(require_domain=True)
         config = icv.get()
 
-        pd = PingingDaemon(config)
+        network = Network(config['server'], config['port'], config['secret'], config['verify_ssl'])
+        pd = PingingDaemon(network, config['domain'])
 
         if action == 'start':
             if pd.is_running():
