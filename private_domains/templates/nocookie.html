@@ -1,0 +1,25 @@
+{% extends "index.html" %}
+
+{% block links %}
+<li><a href="/domains">Domains</a></li>
+<li><a href="/configuration">Configuration</a></li>
+{% endblock %}
+
+{% block content %}
+<img class="nocookie" src="https://farm8.staticflickr.com/7163/6511234161_5bf3d74c1b.jpg" width="10%" />
+
+
+<center>
+<h1>No cookie</h1>
+<h3> Copy over the secret from the computer where you usually access the website. </h3>
+<br /><br /><br />
+<form class="form-inline" method="post" action="/check_cookie">
+  <div class="form-group {%if wrong_secret %}has-error{% endif %}">
+    <label for="secretInput">Secret</label>
+    <input type="input" name="secret" class="form-control" id="secretInput" placeholder="Type your secret...">
+    <button class="btn btn-default">Submit</button>
+  </div>
+</form>
+</center>
+
+{% endblock %}

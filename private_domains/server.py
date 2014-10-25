@@ -143,16 +143,42 @@ def get_ip():
     ip = db.get_ip(domain)
     return ip if ip else ("NOT FOUND", 404)
 
+
+@app.route("/get_ips", methods=['GET', 'POST'])
+def get_ips():
+    if request.method == 'GET':
+        return 'do this from a script...'
+    secret_hash = db.get_config('secret_hash')
+    if secret_hash is None:
+        return "NO SECRET", 503
+
+    password = request.form.get('password')
+
+    if type(password) != unicode or hashlib.sha224(password).hexdigest() != secret_hash:
+        return "WRONG SECRET", 403
+
+    res = []
+    for domain, ip, _ in db.get_domains():
+        res.append('%s %s' % (domain, ip))
+    return '\n'.join(res)
+
 def create_secret():
     s = random_secret()
     db.update_config('secret_hash', hashlib.sha224(s).hexdigest())
-    return """"CREATED NEW SECRET:<br>
-              %s<br>
-              PLEASE STORE SAFELY'
-              <script>
-              document.cookie="secret=%s";
-              </script>
-           """ % (s,s)
+    return render_template("welcome.html", secret=s)
+
+def nocookie():
+    return render_template("nocookie.html")
+
+@app.route("/check_cookie", methods=['POST'])
+def check_cookie():
+    secret = request.form.get("secret")
+    secret_hash = db.get_config('secret_hash')
+
+    if type(secret) != unicode or hashlib.sha224(secret).hexdigest() != secret_hash:
+        return render_template("nocookie.html", wrong_secret=True)
+    else:
+        return render_template("welcome.html", secret=secret)
 
 @app.route("/", methods=['GET'])
 @app.route("/domains", methods=['GET'])
@@ -162,7 +188,7 @@ def index():
         return create_secret()
     cookies_secret = request.cookies.get('secret')
     if type(cookies_secret) != unicode or hashlib.sha224(cookies_secret).hexdigest() != secret_hash:
-        return "set your cookies straight"
+        return nocookie()
     ping_frequency = db.get_config('ping_frequency')
 
     processed_domains = []
@@ -182,7 +208,7 @@ def configuration():
         return create_secret()
     cookies_secret = request.cookies.get('secret')
     if type(cookies_secret) != unicode or hashlib.sha224(cookies_secret).hexdigest() != secret_hash:
-        return "set your cookies straight"
+        return nocookie()
     ping_frequency = db.get_config('ping_frequency')
 
 

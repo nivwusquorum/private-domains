@@ -5,8 +5,22 @@
 <li><a href="/configuration">Configuration</a></li>
 {% endblock %}
 
+{% block scripts %}
+<script>
+function update_timers() {
+    $(".mytimer").each(function(idx, element) {
+        element.innerHTML = parseInt(element.innerHTML) + 1;
+        setTimeout(update_timers, 1000);
+    });
+}
+$(document).ready(update_timers);
+</script>
+{% endblock %}
+
+
 {% block content %}
 
+{% if domains|length > 0 %}
 <table class="table table-bordered table-hover">
 <tr>
 <th>Domain</th>
@@ -17,8 +31,26 @@
     <tr class="{% if domain[2] %}success{% else %}danger{% endif %}">
         <td>{{domain[0]}}</td>
         <td>{{domain[1]}}</td>
-        <td>{% if domain[2] %}alive{% else %} down{% endif %}</td>
+        <td><center>
+            {% if domain[2] %}
+                <span class="glyphicon glyphicon-ok"></span>
+            {% else %}
+                <span class="glyphicon glyphicon-remove"></span>
+                (Last ping <span class="mytimer">{{domain[3]//1000}}</span> seconds ago){% endif %}
+        </center></td>
     </tr>
 {% endfor %}
+{% else %}
+<h3>No domains yet... Execute the following commands to register a domain: </h3><br /><br />
+
+<pre># install the package
+git clone https://github.com/nivwusquorum/private-domains.git
+cd private-domains
+sudo python setup.py install
+# start pinging your IP
+pd pinging start
+# make your computer start pinging automatically on boot
+pd install pinging</pre>
+{% endif %}
 </table>
 {% endblock %}

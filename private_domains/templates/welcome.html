@@ -1,0 +1,22 @@
+{% extends "index.html" %}
+
+{% block links %}
+<li><a href="/domains">Domains</a></li>
+<li><a href="/configuration">Configuration</a></li>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.cookie="secret={{secret}}";
+</script>
+{% endblock %}
+
+{% block content %}
+
+<h3>Your private domain server is up! To add private domains you will need to use your secret. It is already loaded in your browser cookies!<br /><br />
+Store it somewhere safe.</h3> <br /><br />
+<div class="well">
+<center>
+{{secret}}
+</center>
+</div>
+{% endblock %}
