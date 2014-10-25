@@ -51,8 +51,6 @@ def send_ip(server, port, secret, my_domain):
 def connected_to_internet():
     try:
         _ = urllib2.urlopen("http://74.125.228.100", timeout=3) # one of google's IPs.
-        print 'true'
         return True
     except urllib2.URLError:
-        print 'false'
         return False

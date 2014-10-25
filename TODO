@@ -1,11 +1,10 @@
 IMPORTANT
 - input secret
+- script to update etc/hosts or a better way
 
 NICE
-- nice UI
 - set config settings in web
 - reset secret
-- debug long time issue in pinger
-- script to update etc/hosts or a better way
+- debug long time issue in pinger (DNS lookup?)
 - add name leasing (every new computer gets a name and a code - avoids name conflicts)
 - remove old entries (with leasing you could require periodic re-leasing)
