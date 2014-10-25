@@ -4,7 +4,7 @@ import time
 import traceback
 
 from os import getlogin
-from os.path import join
+from os.path import join, expanduser
 
 from config import InteractiveConfigValidation
 from daemon import Daemon
@@ -15,7 +15,7 @@ from utils import data_dir
 class PingingDaemon(Daemon):
     def __init__(self, config):
         self.config = config
-        super(PingingDaemon, self).__init__(join('/tmp', ".daemon_pid"))
+        super(PingingDaemon, self).__init__(expanduser("~/.pd_daemon_pid"))
 
     def run(self):
         while True:
