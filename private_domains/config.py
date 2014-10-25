@@ -25,8 +25,13 @@ class InteractiveConfigValidation(object):
         config_paths = [
             join(data_dir(), ".pdrc_developer"), # dev config
             expanduser("~/.pdrc"), # effective user homedir
-            join('/home', getlogin(), '.pdrc'), # logged in user (important for sudo)
         ]
+        try:
+            # logged in user (important for sudo), but not all distros support it
+            config_paths.append(join('/home', getlogin(), '.pdrc'))
+        except OSError:
+            pass
+
         for path in config_paths:
             if isfile(path):
                 return path
