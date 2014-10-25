@@ -3,27 +3,34 @@ import json
 import sys
 
 from os.path import isfile, expanduser, join
-from os import remove
+from os import remove, getlogin
 
 from network import get_ip, connected_to_internet
 from utils import data_dir, exponential_backoff
 
-if isfile(join(data_dir(), ".pdrc_developer")):
-    print "Using dev_config"
-    CONFIG_PATH = join(data_dir(), ".pdrc_developer")
-else:
-    CONFIG_PATH = expanduser("~/.pdrc")
+
 
 class InteractiveConfigValidation(object):
     def ask_action(self, message, function, *args, **kwargs):
         reply = None
         while reply not in ['Y', 'n']:
             print '%s [Y/n]: ' % (message,),
-            reply = raw_input()[:-1]
-        if reply:
+            reply = raw_input()
+        if reply == 'Y':
             return (function(*args, **kwargs), True)
         else:
             return (None, False)
+
+    def get_config_path(self):
+        config_paths = [
+            join(data_dir(), ".pdrc_developer"), # dev config
+            expanduser("~/.pdrc"), # effective user homedir
+            join('/home', getlogin(), '.pdrc'), # logged in user (important for sudo)
+        ]
+        for path in config_paths:
+            if isfile(path):
+                return path
+        return None
 
     def test_server(self, server, port):
         response = get_ip(server, port, 'wrong_secret', 'test_domain')
@@ -81,9 +88,11 @@ class InteractiveConfigValidation(object):
         def body():
              print "No Internet connection. Backing off."
         exponential_backoff(lambda: connected_to_internet(), body)
+
         config = None
-        if isfile(CONFIG_PATH):
-            with open(CONFIG_PATH) as config:
+        config_path = self.get_config_path()
+        if config_path is not None:
+            with open(config_path) as config:
                 try:
                     config = json.loads(config.read())
                 except Exception:

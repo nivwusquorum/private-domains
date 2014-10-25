@@ -1,7 +1,8 @@
 import time
 import urllib2
+import sys
 
-from os import getenv, access, X_OK
+from os import getenv, access, X_OK, geteuid
 from os.path import abspath, dirname, join, split, pathsep, exists
 
 def package_dir():
@@ -36,3 +37,8 @@ def which(pgm):
         p = join(p, pgm)
         if exists(p) and access(p, X_OK):
             return p
+
+def ensure_sudo():
+    if geteuid() != 0:
+        print "You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting."
+        sys.exit(1)

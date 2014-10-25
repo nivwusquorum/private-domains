@@ -27,6 +27,17 @@ def get_ip(server, port, secret, domain):
         print e
         return 'connection_error'
 
+def get_ips(server, port, secret):
+    payload = {
+        'password': secret,
+    }
+    try:
+        r = requests.post('%s:%d/get_ips' % (server, port), data=payload,  timeout=2)
+        return interpret_reponse(r)
+    except Exception as e:
+        print e
+        return 'connection_error'
+
 def get_network_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('facebook.com', 0))
