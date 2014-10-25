@@ -1,7 +1,8 @@
 import time
 import urllib2
 
-from os.path import abspath, dirname, join
+from os import getenv, access, X_OK
+from os.path import abspath, dirname, join, split, pathsep, exists
 
 def package_dir():
     return dirname(abspath(__file__))
@@ -28,3 +29,10 @@ def exponential_backoff(until_condition, body, intital_backoff=1, max_backoff=10
         body()
         time.sleep(backoff)
         backoff = min(backoff*2, max_backoff)
+
+def which(pgm):
+    path = getenv('PATH')
+    for p in path.split(pathsep):
+        p = join(p, pgm)
+        if exists(p) and access(p, X_OK):
+            return p

@@ -10,7 +10,7 @@ from config import InteractiveConfigValidation
 from daemon import Daemon
 from network import get_ip, send_ip, SEND_MIN_WAIT
 from server import app
-from utils import data_dir
+from utils import data_dir, which
 
 class PingingDaemon(Daemon):
     def __init__(self, config):
@@ -131,7 +131,7 @@ class Install(object):
         if action == "pinging":
             print "In a second you will be presented with your default text editor. Copy text below and paste it at the bottom of that file, save and exit:"
             print ""
-            print "@reboot %s pd pinging start" % getlogin()
+            print "@reboot %s pinging start" % (which('pd'),)
             print ""
             print "Copy the line and press enter to continue."
             raw_input()
