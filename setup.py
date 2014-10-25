@@ -9,4 +9,8 @@ setup(name='private-domains',
         packages=['private_domains'],
         package_data={'private_domains': ['templates/*.html', 'data/*.sql']},
         scripts=['pd'],
+        install_requires=[
+            'requests>=2.4.3',
+            'flask>=0.10.1',
+        ],
 )
