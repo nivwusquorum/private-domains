@@ -1,7 +1,9 @@
+import subprocess
 import sys
 import time
 import traceback
 
+from os import getlogin
 from os.path import join
 
 from config import InteractiveConfigValidation
@@ -13,7 +15,7 @@ from utils import data_dir
 class PingingDaemon(Daemon):
     def __init__(self, config):
         self.config = config
-        super(PingingDaemon, self).__init__(join(data_dir(), ".daemon_pid"))
+        super(PingingDaemon, self).__init__(join('/tmp', ".daemon_pid"))
 
     def run(self):
         while True:
@@ -78,6 +80,8 @@ class Get(object):
         else:
             print resp
 
+
+
 class Pinging(object):
     def parse_argv(self, argv):
         if len(argv) != 1 or argv[0] not in ['start', 'stop']:
@@ -103,11 +107,41 @@ class Pinging(object):
             if pd.is_running():
                 pd.stop()
 
+class Install(object):
+    def parse_argv(self, argv):
+        if len(argv) != 1 or argv[0] not in ['pinging', 'autohosts']:
+            return None
+        else:
+            return (argv[0],)
 
+    def usage(self, script_name, method_name):
+        print "%s %s [pinging/autohosts]\nPinging option helps you setup your computer to automatically start pinging when system boots. Autohosts option will help you setup automatically update your private domains in /etc/hosts file." % (script_name, method_name)
+
+    def run(self, action):
+        icv = InteractiveConfigValidation()
+        if action == 'pinging':
+            icv.run(require_domain=True)
+        else:
+            icv.run()
+            print 'not implemented'
+            sys.exit(1)
+
+        config = icv.get()
+
+        if action == "pinging":
+            print "In a second you will be presented with your default text editor. Copy text below and paste it at the bottom of that file, save and exit:"
+            print ""
+            print "@reboot %s pd pinging start" % getlogin()
+            print ""
+            print "Copy the line and press enter to continue."
+            raw_input()
+        subprocess.call("crontab -e", shell=True)
+        print "Good job! If all went well pinging will now start automatically."
 METHODS = {
     "server": Server(),
     "get": Get(),
     "pinging": Pinging(),
+    "install": Install(),
 }
 
 def usage(script_name, method=None):

@@ -2,11 +2,11 @@ import time
 
 from os.path import abspath, dirname, join
 
-def distribution_dir():
-    return dirname(dirname(abspath(__file__)))
+def package_dir():
+    return dirname(abspath(__file__))
 
 def data_dir():
-    return join(distribution_dir(), 'data')
+    return join(package_dir(), 'data')
 
 def timeit(logger):
     def wrap(method):

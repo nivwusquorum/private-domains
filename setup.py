@@ -5,10 +5,8 @@ setup(name='private-domains',
         version='0.1',
         author='Szymon Sidor',
         author_email='szymon.sidor@gmail.com',
-        url='https://github.com/nivwusquorum/private-domains'
+        url='https://github.com/nivwusquorum/private-domains',
         packages=['private_domains'],
-        package_data={'private_domains': ['templates/*.html']},
-
-        scripts=['scripts/pd'],
-        ]
+        package_data={'private_domains': ['templates/*.html', 'data/*.sql']},
+        scripts=['pd'],
 )
